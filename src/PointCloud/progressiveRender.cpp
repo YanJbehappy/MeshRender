@@ -65,6 +65,7 @@ ProgressiveRender::ProgressiveRender(RenderWidget *glWidget, std::shared_ptr<Poi
 	this->name = pcd->name;
 
 	this->currentAttributeMode = pcd->getAttributeMode();
+	this->currentColorStrip = pcd->getColorStripType();
 
 	glWidget->makeCurrent();
 	fbo->bind();
@@ -111,7 +112,7 @@ void ProgressiveRender::init() {
 	vector<GLBufferAttribute> pcdAttributes;
 	GLBufferAttribute pcdAttribute1("position", 0, 3, GL_FLOAT, GL_FALSE, 20, 0); // xyz 12字节
 	pcdAttributes.emplace_back(pcdAttribute1);
-	GLBufferAttribute pcdAttribute2("attribute", 1, 1, GL_INT, GL_FALSE, 20, 12); // color或其他自定义属性 4字节
+	GLBufferAttribute pcdAttribute2("attribute", 1, 1, GL_FLOAT, GL_FALSE, 20, 12); // color或其他自定义属性 4字节
 	pcdAttributes.emplace_back(pcdAttribute2);
 	GLBufferAttribute pcdAttribute3("show", 2, 1, GL_INT, GL_FALSE, 20, 16); // show属性 4字节(shader里只能4字节)
 	pcdAttributes.emplace_back(pcdAttribute3);
@@ -134,11 +135,12 @@ void ProgressiveRender::renderPointCloudProgressive() {
 	}
 
 	// 属性更改 上载属性
-	if (pcd->getAttributeMode() != currentAttributeMode) {
+	if (pcd->getAttributeMode() != currentAttributeMode || pcd->getColorStripType() != currentColorStrip) {
 		// uploadAttributeMode
 		int AttributeMode = pcd->getAttributeMode();
 		uploadAttribute(AttributeMode);
 		this->currentAttributeMode = AttributeMode;
+		this->currentColorStrip = pcd->getColorStripType();
 	}
 
 	GLenum buffers[2] = {
@@ -170,16 +172,16 @@ void ProgressiveRender::reproject() {
 	}
 	// 
 	if (ATTRIBUTE_MODE == FROM_INTENSITY) {
-		int maxValue = pcd->getmaxIdensity();
-		int minValue = pcd->getminIdensity();
+		float maxValue = static_cast<float>(pcd->getmaxIdensity());
+		float minValue = static_cast<float>(pcd->getminIdensity());
 		void* colorStrip = pcd->getColorStrip();
 		reprojectShader->setUniformBlockValue(uniformBlocks, "colorStrip", "colorStrip.maxValue", &maxValue);
 		reprojectShader->setUniformBlockValue(uniformBlocks, "colorStrip", "colorStrip.minValue", &minValue);
 		reprojectShader->setUniformBlockValue(uniformBlocks, "colorStrip", "colorStrip.colors", colorStrip);
 	}
 	if (ATTRIBUTE_MODE == FROM_HEIGHT) {
-		int maxValue = pcd->boundingBox.max().z();
-		int minValue = pcd->boundingBox.min().z();
+		float maxValue = pcd->boundingBox.max().z();
+		float minValue = pcd->boundingBox.min().z();
 		void* colorStrip = pcd->getColorStrip();
 		fillShader->setUniformBlockValue(uniformBlocks, "colorStrip", "colorStrip.maxValue", &maxValue);
 		fillShader->setUniformBlockValue(uniformBlocks, "colorStrip", "colorStrip.minValue", &minValue);
@@ -210,16 +212,16 @@ void ProgressiveRender::fillFixed() {
 	}
 	// 
 	if (ATTRIBUTE_MODE == FROM_INTENSITY) {
-		int maxValue = pcd->getmaxIdensity();
-		int minValue = pcd->getminIdensity();
+		float maxValue = static_cast<float>(pcd->getmaxIdensity());
+		float minValue = static_cast<float>(pcd->getminIdensity());
 		void* colorStrip = pcd->getColorStrip();
 		fillShader->setUniformBlockValue(uniformBlocks, "colorStrip", "colorStrip.maxValue", &maxValue);
 		fillShader->setUniformBlockValue(uniformBlocks, "colorStrip", "colorStrip.minValue", &minValue);
 		fillShader->setUniformBlockValue(uniformBlocks, "colorStrip", "colorStrip.colors", colorStrip);
 	}
 	if (ATTRIBUTE_MODE == FROM_HEIGHT) {
-		int maxValue = pcd->boundingBox.max().z();
-		int minValue = pcd->boundingBox.min().z();
+		float maxValue = pcd->boundingBox.max().z();
+		float minValue = pcd->boundingBox.min().z();
 		void* colorStrip = pcd->getColorStrip();
 		fillShader->setUniformBlockValue(uniformBlocks, "colorStrip", "colorStrip.maxValue", &maxValue);
 		fillShader->setUniformBlockValue(uniformBlocks, "colorStrip", "colorStrip.minValue", &minValue);
@@ -332,7 +334,7 @@ ProgressiveRenderState* ProgressiveRender::getRenderState() {
 	return renderState;
 }
 
-Eigen::MatrixXf ProgressiveRender::getColorStrip()
+Eigen::MatrixXf ProgressiveRender::getColorStrip() const
 {
 	int Color_type = pcd->getColorStripType();
 	switch (Color_type)
@@ -355,10 +357,10 @@ void ProgressiveRender::uploadAttribute(int AttributeMode) {
 	switch (AttributeMode) {
 	case FROM_RBG: {
 		auto color = pcd->colors;
-		Eigen::MatrixXi int_color;
-		int_color.resize(1, color.cols());
-		memcpy((void*)int_color.data(), (void*)color.data(), color.cols() * 4);
-		upload->uploadChunkAttribute(int_color.data(), 0, int_color.cols());
+		Eigen::MatrixXf float_color;
+		float_color.resize(1, color.cols());
+		memcpy(float_color.data(), color.data(), 4 * color.cols());
+		upload->uploadChunkAttribute(float_color.data(), 0, float_color.cols());
 	}
 		break;
 	case FROM_Label: {
@@ -374,7 +376,10 @@ void ProgressiveRender::uploadAttribute(int AttributeMode) {
 	}
 		break;
 	case FROM_HEIGHT: {
-		auto height = pcd->position.row(2);
+		//auto height = pcd->position.row(2);
+		Eigen::MatrixXf height;
+		height.resize(1, pcd->position.cols());
+		height = pcd->position.row(2);
 		upload->uploadChunkAttribute(height.data(), 0, height.cols());
 		Eigen::MatrixXf colorStrip = getColorStrip();
 		pcd->setColorStrip(colorStrip.cols(), colorStrip);
@@ -706,7 +711,7 @@ std::shared_ptr<PointCloud> ProgressiveRender::createPcdFromBuffer() {
 	Eigen::MatrixXf position;
 	Eigen::MatrixXi_8 colors;
 	Eigen::MatrixXi labels;
-	Eigen::MatrixXi intensity;
+	Eigen::MatrixXf intensity;
 	position.resize(3, pcd->points_num);
 	colors.resize(4, pcd->points_num);
 	labels.resize(1, pcd->points_num);

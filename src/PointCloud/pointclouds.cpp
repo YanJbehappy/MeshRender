@@ -81,11 +81,11 @@ void* PointCloud::getColorStrip() const {
 	return (void*)this->colorStrip.data();
 }
 
-int PointCloud::getmaxIdensity() const {
+float PointCloud::getmaxIdensity() const {
 	return maxIdensity;
 }
 
-int PointCloud::getminIdensity() const {
+float PointCloud::getminIdensity() const {
 	return minIdensity;
 }
 

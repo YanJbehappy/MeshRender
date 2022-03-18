@@ -67,7 +67,7 @@ struct ProgressiveRenderState : protected QOpenGLFunctions_4_5_Core {
 
 class ProgressiveRender : protected QOpenGLFunctions_4_5_Core {
 public:
-	ProgressiveRender(RenderWidget *glWidget, std::shared_ptr<PointCloud> &pcd);
+	ProgressiveRender(RenderWidget* glWidget, std::shared_ptr<PointCloud>& pcd);
 	~ProgressiveRender();
 
 public:
@@ -86,7 +86,7 @@ public:
 
 	// 0表示在多边形内部，1表示在多边形外部
 	vector<int> selectPointsByPolygon(vector<Point> polygon, int SelectMode);
-	vector<int> selectPointsByPolyline(vector<Point> polyline, vector<Point> &gridPolyline);
+	vector<int> selectPointsByPolyline(vector<Point> polyline, vector<Point>& gridPolyline);
 
 	void uploadAttribute(int AttributeMode); // 上传更新属性信息
 
@@ -101,35 +101,36 @@ protected:
 	void createVBO();
 
 	ProgressiveRenderState* getRenderState(); // 获取渐进方式渲染状态信息
-	Eigen::MatrixXf getColorStrip();	// 获取选择的colormap
+	Eigen::MatrixXf getColorStrip() const;	// 获取选择的colormap
 
 protected:
-	RenderWidget *glWidget = nullptr;
-	FrameBuffer *fbo = nullptr; // 离屏绘制到的帧缓冲
-	Camera *camera = nullptr;
-	Window *window = nullptr;
+	RenderWidget* glWidget = nullptr;
+	FrameBuffer* fbo = nullptr; // 离屏绘制到的帧缓冲
+	Camera* camera = nullptr;
+	Window* window = nullptr;
 
 	std::shared_ptr<PointCloud> pcd = nullptr; // 点云信息
-	UpLoader *upload = nullptr; // 点云数据上载GPU模块
+	UpLoader* upload = nullptr; // 点云数据上载GPU模块
 
 	vector<GLBuffer*> pointcloudBuffers; // 大型点云分块缓冲管理
 
-	ProgressiveRenderState *renderState = nullptr; // 渐进渲染的状态管理
+	ProgressiveRenderState* renderState = nullptr; // 渐进渲染的状态管理
 
-	Texture *gradientImage = nullptr; // 颜色梯度纹理, 用于着色器内获取颜色
+	Texture* gradientImage = nullptr; // 颜色梯度纹理, 用于着色器内获取颜色
 
-	Shader *reprojectShader = nullptr; // 重投影着色器
-	Shader *fillShader = nullptr; // 空洞填充着色器
-	Shader *createVBOShader = nullptr; // 创建重投影VBO着色器
+	Shader* reprojectShader = nullptr; // 重投影着色器
+	Shader* fillShader = nullptr; // 空洞填充着色器
+	Shader* createVBOShader = nullptr; // 创建重投影VBO着色器
 
-	Shader *SegmentShader = nullptr; // 裁剪着色器
-	Shader *resumeSegmentShader = nullptr; // 恢复裁剪着色器
+	Shader* SegmentShader = nullptr; // 裁剪着色器
+	Shader* resumeSegmentShader = nullptr; // 恢复裁剪着色器
 
-	Shader *selectShader = nullptr; // 区域选择着色器
+	Shader* selectShader = nullptr; // 区域选择着色器
 
 	vector<UniformBlock*> uniformBlocks; // uniform块管理
 
 	int currentAttributeMode = -1;
+	int currentColorStrip = -1;
 
 	// ------------------------------------------------------------------------------------------------------------------------------- 
 	QStack<GLuint> selectBufferStack; // 存储裁剪时选择的点索引(打乱后)

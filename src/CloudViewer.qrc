@@ -133,5 +133,7 @@
         <file>Resources/images/HeightColor.png</file>
         <file>Resources/images/IntensityColor.png</file>
         <file>Resources/images/RGBColor.png</file>
+        <file>Resources/images/none.png</file>
+        <file>Resources/images/zValue.png</file>
     </qresource>
 </RCC>

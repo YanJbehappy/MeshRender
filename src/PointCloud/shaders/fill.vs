@@ -8,7 +8,7 @@
 #define NOT_SHOW_COLOR 5 // 不展示颜色
 
 layout(location = 0) in vec3 aPosition;
-layout(location = 1) in int aValue;
+layout(location = 1) in float aValue;
 layout(location = 2) in int show;
 
 uniform mat4 uWorldViewProj;
@@ -19,9 +19,9 @@ layout(binding = 0) uniform sampler2D uGradient;
 
 // 色带
 layout(std140, binding = 1) uniform colorStrip{
-	vec4 colors[343];
-	int maxValue;
-	int minValue;
+	vec4 colors[256];
+	float maxValue;
+	float minValue;
 }colorstrip;
 
 uniform int uAttributeMode;
@@ -31,17 +31,19 @@ out vec4 vVertexID;
 out float vShow;
 
 vec3 getColorFromV1(){
-	float w = intBitsToFloat(aValue);
+	// float w = intBitsToFloat(aValue);
+	float w = aValue;
 	w = clamp(w, 0, 1);
 	vec3 v = texture(uGradient, vec2(w, 0.0)).rgb;
 	return v;
 }
 
 vec3 getColorFromV3(){
+	int inColor = floatBitsToInt(aValue);
 	vec3 v = vec3(
-		(aValue >>   0) & 0xFF,
-		(aValue >>   8) & 0xFF,
-		(aValue >>  16) & 0xFF
+		(inColor >>   0) & 0xFF,
+		(inColor >>   8) & 0xFF,
+		(inColor >>  16) & 0xFF
 	);
 	v = v / 255.0;
 	return v;
@@ -51,7 +53,8 @@ vec3 getColorFromV3(){
 // 根据分类着色
 vec3 getColorFromLabels(){
 	vec3 v = vec3(1.0, 1.0, 1.0);
-	switch(aValue){
+	int inLabel = int(aValue);
+	switch(inLabel){
 		case 0:
 			v = vec3(1.0 , 1.0, 1.0);
 			break;
@@ -93,7 +96,7 @@ vec3 getColorFromIntensity(){
 	if(colorstrip.maxValue == 0 && colorstrip.minValue == 0){
 		return v;
 	}
-	int index = int((aValue - colorstrip.minValue) / float((colorstrip.maxValue - colorstrip.minValue)) * 255);
+	int index = int((aValue - colorstrip.minValue) / (colorstrip.maxValue - colorstrip.minValue) * 255);
 	v = vec3(colorstrip.colors[index]);
 	// v = v / 255.0;
 	return v;
@@ -106,7 +109,7 @@ vec3 getColorFromHeight(){
 	if(colorstrip.maxValue == 0 && colorstrip.minValue == 0){
 		return v;
 	}
-	int index = int((aValue - colorstrip.minValue) / float((colorstrip.maxValue - colorstrip.minValue)) * 255);
+	int index = int((aValue - colorstrip.minValue) / (colorstrip.maxValue - colorstrip.minValue) * 255);
 	v = vec3(colorstrip.colors[index]);
 	// v = v / 255.0;
 	return v;

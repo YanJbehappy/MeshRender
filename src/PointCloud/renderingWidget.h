@@ -110,20 +110,19 @@ public:
 	vector<UniformBlock*> uniformBlocks; // uniform块管理
 
 public:
-	// 添加显示点云
-	bool addPointCloud(std::shared_ptr<PointCloud> &pcd);
+	bool addPointCloud(std::shared_ptr<PointCloud> &pcd); // 添加显示点云
 	bool removePointCloud(QString name);
 	void removeAllPointClouds();
 
-	// 添加点集
 	bool addPoints(pcl::PointCloud<pcl::PointXYZ>::Ptr& points, QString pointsName, int r = 255, int g = 128, int b = 51, int pointSize = 6);
-	// 添加线
+
 	bool addLines(pcl::PointCloud<pcl::PointXYZ>::Ptr& points, QString lineName, int r = 255, int g = 128, int b = 51, int pointSize = 6);
 	bool removeShape(QString shapeName);
 	void removeAllShapes();
 
 	void setMSAAsamples(int samples);
 	void setEDL(bool enable);
+	bool getEDLState() const { return EDL_ENABLE; }
 
 	//vector<ProgressiveRender*> getRenderList();
 	std::map<QString, ProgressiveRender*> getProgressiveRenderMap();

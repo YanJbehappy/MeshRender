@@ -90,7 +90,7 @@ public:
 
 	// 强度信息
 	// 1 * n
-	Eigen::MatrixXi intensity;
+	Eigen::MatrixXf intensity;
 
 	//包围盒
 	BoundingBox3f boundingBox;
@@ -118,8 +118,8 @@ protected:
 	int COLOR_TYPE = 0;
 	float pointSize = 2; // 点大小
 	// 色带相关设置
-	int maxIdensity;
-	int minIdensity;
+	float maxIdensity;
+	float minIdensity;
 	Eigen::MatrixXf colorStrip;
 
 	QStack<int> flagTable; // 点云添加标记位, 新增点云的起始位置索引
@@ -140,8 +140,8 @@ public:
 	void setmaxIdensity(int maxIdensity);
 	void setminIdensity(int minIdensity);
 	void* getColorStrip() const;
-	int getmaxIdensity() const;
-	int getminIdensity() const;
+	float getmaxIdensity() const;
+	float getminIdensity() const;
 
 	void removeByIndex(int index); // 按照点索引删除点
 	void addPcd(std::shared_ptr<PointCloud> &pcd); // 添加一块点云

@@ -8,7 +8,7 @@
 #define NOT_SHOW_COLOR 5
 
 layout(location = 0) in vec3 aPosition; // 顶点位置
-layout(location = 1) in int aValue; // color or Attribute
+layout(location = 1) in float aValue; // color or Attribute
 layout(location = 2) in int aIndex;
 layout(location = 3) in int show;
 
@@ -20,9 +20,9 @@ layout(binding = 0) uniform sampler2D uGradient;
 
 // 色带
 layout(std140, binding = 1) uniform colorStrip{
-	vec4 colors[343];
-	int maxValue;
-	int minValue;
+	vec4 colors[256];
+	float maxValue;
+	float minValue;
 }colorstrip;
 
 out vec3 vColor;
@@ -31,7 +31,8 @@ out float vShow;
 
 // mode = 0
 vec3 getColorFromV1(){
-	float w = intBitsToFloat(aValue);
+	// float w = intBitsToFloat(aValue);
+	float w = aValue;
 	w = clamp(w, 0, 1);
 	vec3 v = texture(uGradient, vec2(w, 0.0)).rgb;
 	return v;
@@ -39,10 +40,11 @@ vec3 getColorFromV1(){
 // mode = 1
 // 因为是小端模式 内存地址从小到大依次为低位到高位
 vec3 getColorFromV3(){
+	int inColor = floatBitsToInt(aValue);
 	vec3 v = vec3(
-		(aValue >>   0) & 0xFF, // r
-		(aValue >>   8) & 0xFF, // g
-		(aValue >>  16) & 0xFF  // b
+		(inColor >>   0) & 0xFF, // r
+		(inColor >>   8) & 0xFF, // g
+		(inColor >>  16) & 0xFF  // b
 	);
 	v = v / 255.0;
 
@@ -53,7 +55,8 @@ vec3 getColorFromV3(){
 // 根据分类着色
 vec3 getColorFromLabels(){
 	vec3 v = vec3(1.0, 1.0, 1.0);
-	switch(aValue){
+	int inLabel = int(aValue);
+	switch(inLabel){
 		case 0:
 			v = vec3(1.0 , 1.0, 1.0);
 			break;
@@ -95,7 +98,7 @@ vec3 getColorFromIntensity(){
 	if(colorstrip.maxValue == 0 && colorstrip.minValue == 0){
 		return v;
 	}
-	int index = int((aValue - colorstrip.minValue) / float((colorstrip.maxValue - colorstrip.minValue)) * 342);
+	int index = int((aValue - colorstrip.minValue) / (colorstrip.maxValue - colorstrip.minValue) * 255);
 	v = vec3(colorstrip.colors[index]);
 	// v = v / 255.0;
 	return v;
@@ -108,7 +111,7 @@ vec3 getColorFromHeight(){
 	if(colorstrip.maxValue == 0 && colorstrip.minValue == 0){
 		return v;
 	}
-	int index = int((aValue - colorstrip.minValue) / float((colorstrip.maxValue - colorstrip.minValue)) * 255);
+	int index = int((aValue - colorstrip.minValue) / (colorstrip.maxValue - colorstrip.minValue) * 255);
 	v = vec3(colorstrip.colors[index]);
 	// v = v / 255.0;
 	return v;
@@ -136,7 +139,7 @@ void main() {
 	else if(uAttributeMode == SHOW_COLORFROMHEIGHT){
 		vColor = getColorFromHeight();
 	}
-	
+
 	uint index = uint(aIndex);
 	vVertexID = vec4(
 		float((index >>  0) & 0xFF) / 255.0,
