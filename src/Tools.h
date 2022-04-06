@@ -5,12 +5,14 @@
 #include <vector>
 #include <QTime>
 #include <QString>
+#include <QPointF>
 
 #include <PointCloud/pointclouds.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
 class MyCloud;
+struct Point;
 
 using std::string;
 using std::vector;
@@ -35,6 +37,9 @@ QString toQString(const string& s);
 string fromQString(const QString& qs);
 
 string joinStrVec(const vector<string> v, string splitor = " ");
+
+// 获取点云转换矩阵
+Eigen::Matrix4f getModelMatrixToOrigin(Eigen::Vector3f origin);
 
 // 判断点是否在多边形内部，二维平面上计算
 int inOrNot1n(int poly_sides, double* poly_X, double* poly_Y, double x, double y);
@@ -93,4 +98,8 @@ void convertToOpenGLCloud(const pcl::PointCloud<T>& cloud_in, int r, int g, int 
 	cloud_out.setAttributeMode(FROM_RBG);
 
 }
+
+// 改进的中点画圆法－Bresenham算法
+vector<Point> Bresenham_Circle(const Point& center, const int& radius);
+
 #endif

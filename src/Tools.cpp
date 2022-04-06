@@ -1,5 +1,6 @@
 #include "Tools.h"
 #include "MyCloud.h"
+#include "Base/tool.h"
 
 QTime myTime;
 
@@ -48,11 +49,28 @@ string fromQString(const QString& qs) {
 string joinStrVec(const vector<string> v, string splitor) {
 	string s = "";
 	if (v.size() == 0) return s;
-	for (int i = 0; i != v.size()  - 1; ++i) {
+	for (int i = 0; i != v.size() - 1; ++i) {
 		s += (v[i] + splitor);
 	}
 	s += v[v.size() - 1];
 	return s;
+}
+
+// 获取点云转换矩阵
+Eigen::Matrix4f getModelMatrixToOrigin(Eigen::Vector3f origin) {
+	// 点云编辑平移值
+	Eigen::Vector3f translate = Eigen::Vector3f::Identity();
+	// 点云编辑旋转值
+	Eigen::Matrix4f rotation = Eigen::Matrix4f::Identity();
+	// 点云编辑尺度缩放
+	float zoom = 1.0;
+	// 自动平移至中心位置
+	Eigen::Matrix4f transTocenter = Eigen::Affine3f(Eigen::Translation<float, 3>(-origin)).matrix();
+	// 用户定义平移量
+	Eigen::Matrix4f trans = Eigen::Affine3f(Eigen::Translation<float, 3>(translate)).matrix();
+	//先旋转 后平移
+	Eigen::Matrix4f model = trans * rotation * Eigen::Affine3f(Eigen::Scaling(Eigen::Vector3f::Constant(zoom))).matrix() * transTocenter;
+	return model;
 }
 
 int inOrNot1n(int poly_sides, double* poly_X, double* poly_Y, double x, double y)
@@ -134,4 +152,67 @@ void convertToOpenGLCloud(const MyCloud& mycloud_in, PointCloud& cloud_out) {
 
 	// 分配 indexTable
 	cloud_out.indexTable = new uint32_t[points_num];
+}
+
+vector<Point> Bresenham_Circle(const Point& center, const int& radius)
+{
+	int x, y, d;
+	x = 0;
+	y = radius;
+	d = 3 - 2 * radius;
+
+	// 根据圆的对称性，利用八分之一圆弧的点生成另外的点
+	vector<Point> arc_1, arc_2, arc_3, arc_4, arc_5, arc_6, arc_7, arc_8;
+	{// 添加第一个点，这里没有添加45°、90°、135°、180°、225°、270°、315°对应点
+		Point point_1(x, y), point_8(-x, y);
+		point_1 += center, point_8 += center;
+		arc_1.emplace_back(point_1), arc_8.emplace_back(point_8);
+	}
+	while (x < y)
+	{
+		if (d < 0)
+		{
+			d = d + 4 * x + 6;
+		}
+		else
+		{
+			d = d + 4 * (x - y) + 10;
+			y--;
+		}
+		x++;
+
+		Point point_1(x, y), point_2(y, x), point_3(y, -x), point_4(x, -y), point_5(-x, -y), point_6(-y, -x), point_7(-y, x), point_8(-x, y);
+		point_1 += center, point_2 += center, point_3 += center, point_4 += center, point_5 += center, point_6 += center, point_7 += center, point_8 += center;
+		arc_1.emplace_back(point_1), arc_2.emplace_back(point_2), arc_3.emplace_back(point_3), arc_4.emplace_back(point_4);
+		arc_5.emplace_back(point_5), arc_6.emplace_back(point_6), arc_7.emplace_back(point_7), arc_8.emplace_back(point_8);
+	}
+	// 将圆上点按顺时针排列添加到一个数组中
+	// 0~45度区间为arc_1, 45~90度区间为arc_2
+	for (int i = arc_2.size() - 1; i >= 0; i--)
+	{
+		arc_1.push_back(arc_2[i]);
+	}
+	// 90~135度区间
+	arc_1.insert(arc_1.end(), arc_3.begin(), arc_3.end());
+	// 135~180度区间
+	for (int i = arc_4.size() - 1; i >= 0; i--)
+	{
+		arc_1.push_back(arc_4[i]);
+	}
+	// 180~225度区间
+	arc_1.insert(arc_1.end(), arc_5.begin(), arc_5.end());
+	// 225~270度区间
+	for (int i = arc_6.size() - 1; i >= 0; i--)
+	{
+		arc_1.push_back(arc_6[i]);
+	}
+	// 270~315度区间
+	arc_1.insert(arc_1.end(), arc_7.begin(), arc_7.end());
+	// 315~360度区间
+	for (int i = arc_8.size() - 1; i >= 0; i--)
+	{
+		arc_1.push_back(arc_8[i]);
+	}
+
+	return arc_1;
 }
