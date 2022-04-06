@@ -10,6 +10,15 @@
 
 #include <QOpenGlFunctions_4_5_Core>
 
+ //! View orientation
+enum ViewOrientation {
+	TOP_VIEW,	/**< Top view (eye: +Z) **/
+	FRONT_VIEW,	/**< Front view **/
+	LEFT_VIEW,	/**< Left view **/
+	//BOTTOM_VIEW,	/**< Bottom view **/
+	//BACK_VIEW,	/**< Back view **/
+	//RIGHT_VIEW,	/**< Right view **/
+};
 
  // Uniform Block 管理 块布局 默认std140
 struct UniformBlock : protected QOpenGLFunctions_4_5_Core {

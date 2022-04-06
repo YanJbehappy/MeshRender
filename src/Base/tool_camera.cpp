@@ -8,6 +8,7 @@
  */
 #include "tool_camera.h"
 #include <PointCloud/renderingWidget.h>
+#include "Tools.h"
 
 ToolCamera::ToolCamera(RenderWidget *glWidget) {
 	this->glWidget = glWidget;
@@ -113,6 +114,9 @@ void ToolCamera::mouseDoubleClick(QMouseEvent* e){
 	if (e->button()==Qt::LeftButton){
 		Eigen::Vector2f screen2D_(e->localPos().x(), e->localPos().y());
 		Eigen::Vector3f screen3D_ = camera->convert_2dTo3d(screen2D_);
+
+		//camera->setPreTransform(getModelMatrixToOrigin(screen3D_));
+		//camera->model_translation = Eigen::Vector3f::Zero();
         //Eigen::Vector3f target_ = camera->target;
         //Eigen::Vector3f up_ = camera->up;
 

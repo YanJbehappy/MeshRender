@@ -28,7 +28,7 @@ public:
 
 	vector<int> getPointsByPolyline(ProgressiveRender *proRender, vector<Point> polyline, vector<Point> &gridPolyline);
 
-	QChart *drawProfile(ProgressiveRender *proRender, vector<Point> polyline, float &Alllength);
+	QChart *drawProfile(ProgressiveRender *proRender, vector<Point> polyline, float &Alllength, vector<std::pair<float, int>>& lengthIndex);
 
 private:
 	RenderWidget *glWidget = nullptr;

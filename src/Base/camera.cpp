@@ -1,6 +1,6 @@
 /*
  * @Descripttion: FPS风格相机类
- * @version: 
+ * @version:
  * @Author: JinYiGao
  * @Date: 2021-03-04 13:56:02
  * @LastEditors: JinYiGao
@@ -11,7 +11,51 @@
 #include <iostream>
 #include <QTime>
 
- //------------观察矩阵 (View)-------------
+Camera::Camera()
+{
+	this->setView(TOP_VIEW);
+}
+
+Camera::~Camera()
+{
+
+}
+
+void Camera::setView(ViewOrientation orientation)
+{
+	Eigen::Vector3f eye(0, 0, 0);
+	Eigen::Vector3f center(0, 0, 0);
+	Eigen::Vector3f top(0, 0, 0);
+
+	//we look at (0,0,0) by default
+	switch (orientation)
+	{
+	case TOP_VIEW:
+		eye.z() = 1.0;
+		top.y() = 1.0;
+		break;
+	case FRONT_VIEW:
+		eye.y() = 1.0;
+		top.z() = 1.0;
+		break;
+	case LEFT_VIEW:
+		eye.x() = 1.0;
+		top.z() = 1.0;
+		break;
+	}
+
+	this->position = eye;
+	this->target = center;
+	this->up = top;
+
+	// 设置旋转球的方向
+	Arcball newArcball;
+	newArcball.setSize(size);
+	newArcball.setView(orientation);
+	this->arcball = newArcball;
+}
+
+//------------观察矩阵 (View)-------------
  //----------------------------------------
  //         Rx  Ry  Rz  0     1  0  0  -Px
  //         Ux  Uy  Uz  0     0  1  0  -Py
@@ -23,7 +67,7 @@
  //* up 上向量 ，用于创建 相机坐标系
  //
  //利用该观察矩阵，可以将物体世界坐标转换为相机坐标系下坐标
-Eigen::Matrix4f Camera::lookAt(const Eigen::Vector3f &origin, const Eigen::Vector3f &target, const Eigen::Vector3f up)
+Eigen::Matrix4f Camera::lookAt(const Eigen::Vector3f& origin, const Eigen::Vector3f& target, const Eigen::Vector3f up)
 {
 	Eigen::Vector3f f = (target - origin).normalized();
 	Eigen::Vector3f s = f.cross(up).normalized();
@@ -75,13 +119,13 @@ void Camera::setPreTransform(Eigen::Matrix4f preTransform) {
 }
 
 //获得缩放矩阵
-Eigen::Matrix4f scale(const Eigen::Vector3f &v) 
-{ 
-	return Eigen::Affine3f(Eigen::Scaling(v)).matrix(); 
+Eigen::Matrix4f scale(const Eigen::Vector3f& v)
+{
+	return Eigen::Affine3f(Eigen::Scaling(v)).matrix();
 }
 
 //获得平移矩阵
-Eigen::Matrix4f translate(const Eigen::Vector3f &v) 
+Eigen::Matrix4f translate(const Eigen::Vector3f& v)
 {
 	return Eigen::Affine3f(Eigen::Translation<float, 3>(v)).matrix();
 }
@@ -90,7 +134,7 @@ Eigen::Matrix4f translate(const Eigen::Vector3f &v)
 Eigen::Matrix4f Camera::createModel(Eigen::Matrix4f rotation, Eigen::Vector3f translation, float zoom)
 {
 	//先旋转 后平移
-	Eigen::Matrix4f model = scale(Eigen::Vector3f::Constant(zoom)) * translate(translation) *  rotation * preTransform;
+	Eigen::Matrix4f model = scale(Eigen::Vector3f::Constant(zoom)) * translate(translation) * rotation * preTransform;
 	return model;
 }
 
@@ -98,14 +142,16 @@ std::tuple<Eigen::Matrix4f, Eigen::Matrix4f, Eigen::Matrix4f> Camera::get_mvp()
 {
 	Eigen::Matrix4f model, view, proj;
 	view = lookAt(position, target, up);//创建观察矩阵
-	
-	float fH = std::tan(view_angle / 360.0f * M_PI) * position.z();
+
+	float fH = std::tan(view_angle / 360.0f * M_PI) * 1.0;
+	//float fH = std::tan(view_angle / 360.0f * M_PI) * znear;
+	//float fH = std::tan(view_angle / 360.0f * M_PI) * position.z();
 	float fW = fH * (float)size.x() / (float)size.y();
 	if (is_ortho)
 	{
 		proj = ortho(-fW, fW, -fH, fH, znear, zfar);
 	}
-	else 
+	else
 	{
 		proj = frustum(-fW, fW, -fH, fH, znear, zfar);
 	}
@@ -125,15 +171,15 @@ Eigen::Matrix4f Camera::getTransform()
 	Eigen::Matrix4f model = std::get<0>(mvp);
 	Eigen::Matrix4f view = std::get<1>(mvp);
 	Eigen::Matrix4f proj = std::get<2>(mvp);
-	
+
 	return  proj * view * model;
 }
 
 // 屏幕坐标转opengl 3d坐标
-Eigen::Vector3f Camera::convert_2dTo3d(const Eigen::Vector2f &screen_point) {
+Eigen::Vector3f Camera::convert_2dTo3d(const Eigen::Vector2f& screen_point) {
 	// 标准化坐标
 	Vector4f screen2d;
-	screen2d.x() = screen_point.x() / (float) size.x() * 2 - 1.0;
+	screen2d.x() = screen_point.x() / (float)size.x() * 2 - 1.0;
 	screen2d.y() = -screen_point.y() / (float)size.y() * 2 + 1.0;
 
 	std::tuple<Eigen::Matrix4f, Eigen::Matrix4f, Eigen::Matrix4f> mvp = get_mvp();
@@ -158,7 +204,7 @@ Eigen::Vector2f Camera::convert_3dTo2d(const Eigen::Vector3f& world_point) {
 	Eigen::Vector4f pte(world_point.x(), world_point.y(), world_point.z(), 1);
 
 	std::tuple<Eigen::Matrix4f, Eigen::Matrix4f, Eigen::Matrix4f> mvp = get_mvp();
-	Eigen::Matrix4f model = this->createModel(Eigen::Matrix4f::Identity(), Eigen::Vector3f::Identity(), this->zoom);
+	Eigen::Matrix4f model = std::get<0>(mvp);// this->createModel(Eigen::Matrix4f::Identity(), Eigen::Vector3f::Identity(), this->zoom);
 	Eigen::Matrix4f view = std::get<1>(mvp);
 	Eigen::Matrix4f proj = std::get<2>(mvp);
 
@@ -172,13 +218,13 @@ Eigen::Vector2f Camera::convert_3dTo2d(const Eigen::Vector3f& world_point) {
 	return window_cord.head(2);
 }
 
-void Camera::start_translate(const Vector2f &screen_point)
+void Camera::start_translate(const Vector2f& screen_point)
 {
 	M_start_translate = screen_point;
 	is_translate = true;
 }
 
-void Camera::motion_translate(const Vector2f &screen_point)
+void Camera::motion_translate(const Vector2f& screen_point)
 {
 	if (is_translate)
 	{
@@ -195,23 +241,23 @@ void Camera::motion_translate(const Vector2f &screen_point)
 	}
 }
 
-void Camera::end_translate(const Vector2i &screen_point)
+void Camera::end_translate(const Vector2i& screen_point)
 {
 	is_translate = false;
 }
 
-void Camera::start_rotate(const Vector2i &screen_point) {
+void Camera::start_rotate(const Vector2i& screen_point) {
 	arcball.button(screen_point.cast<int>(), true);
 	is_rotate = true;
 }
 
-void Camera::motion_rotate(const Vector2i &screen_point) {
+void Camera::motion_rotate(const Vector2i& screen_point) {
 	if (!is_rotate)
 		return;
 	arcball.motion(screen_point.cast<int>());
 }
 
-void Camera::end_rotate(const Vector2i &screen_point) {
+void Camera::end_rotate(const Vector2i& screen_point) {
 	motion_rotate(screen_point);
 
 	arcball.button(screen_point, false);

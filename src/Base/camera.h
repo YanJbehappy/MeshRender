@@ -1,6 +1,6 @@
 /*
  * @Descripttion: FPS风格相机类
- * @version: 
+ * @version:
  * @Author: JinYiGao
  * @Date: 2021-03-04 13:55:56
  * @LastEditors: JinYiGao
@@ -9,6 +9,7 @@
 #pragma once
 #include <Eigen/Eigen>
 #include <Base/common.h>
+#include <Base/glutils.h>
 #include <tuple>
 #include <iostream>
 
@@ -24,16 +25,18 @@ using namespace Eigen;
  */
 struct Arcball {
 	Arcball(float speedFactor = 2.0f)
-		: mActive(false), mLastPos(Vector2i::Zero()), mSize(Vector2i::Zero()), mQuat(Quaternionf::Identity()),
+		: viewOrientation(ViewOrientation::TOP_VIEW), mActive(false), mLastPos(Vector2i::Zero()), mSize(Vector2i::Zero()), mQuat(Quaternionf::Identity()),
 		mIncr(Quaternionf::Identity()), mSpeedFactor(speedFactor) {}
 
-	Arcball(const Quaternionf &quat)
-		: mActive(false), mLastPos(Vector2i::Zero()), mSize(Vector2i::Zero()), mQuat(quat),
+	Arcball(const Quaternionf& quat)
+		: viewOrientation(ViewOrientation::TOP_VIEW), mActive(false), mLastPos(Vector2i::Zero()), mSize(Vector2i::Zero()), mQuat(quat),
 		mIncr(Quaternionf::Identity()), mSpeedFactor(2.0f) {}
 
-	Quaternionf &state() { return mQuat; }
 
-	void setState(const Quaternionf &state) {
+
+	Quaternionf& state() { return mQuat; }
+
+	void setState(const Quaternionf& state) {
 		mActive = false;
 		mLastPos = Vector2i::Zero();
 		mQuat = state;
@@ -41,7 +44,8 @@ struct Arcball {
 	}
 
 	void setSize(Vector2i size) { mSize = size; }
-	const Vector2i &size() const { return mSize; }
+	const Vector2i& size() const { return mSize; }
+	void setView(ViewOrientation orientation) { viewOrientation = orientation; }
 	void setSpeedFactor(float speedFactor) { mSpeedFactor = speedFactor; }
 	float speedFactor() const { return mSpeedFactor; }
 	bool active() const { return mActive; }
@@ -72,7 +76,25 @@ struct Arcball {
 		tx *= invMinDim;
 		ty *= invMinDim;
 
-		Vector3f v0(ox, oy, 1.0f), v1(tx, ty, 1.0f);
+		Vector3f v0, v1;
+		switch (viewOrientation)
+		{
+		case TOP_VIEW:
+			v0 = Vector3f(ox, oy, 1.0f);
+			v1 = Vector3f(tx, ty, 1.0f);
+			break;
+		case FRONT_VIEW:
+			v0 = Vector3f(-ox, 1.0f, oy);
+			v1 = Vector3f(-tx, 1.0f, ty);
+			break;
+		case LEFT_VIEW:
+			v0 = Vector3f(1.0f, ox, oy);
+			v1 = Vector3f(1.0f, tx, ty);
+			break;
+		default:
+			break;
+		}
+		//Vector3f v0(ox, oy, 1.0f), v1(tx, ty, 1.0f);
 		if (v0.squaredNorm() > 1e-4f && v1.squaredNorm() > 1e-4f) {
 			v0.normalize();
 			v1.normalize();
@@ -95,6 +117,7 @@ struct Arcball {
 	}
 
 protected:
+	ViewOrientation viewOrientation;
 	bool mActive;
 	Vector2i mLastPos;
 	Vector2i mSize;
@@ -105,10 +128,12 @@ protected:
 class Camera
 {
 public:
+	Camera();
+	~Camera();
 	//Camera Attributes
-	Eigen::Vector3f position = { 0.0f, 0.0f, 1.0f };//相机位置
-	Eigen::Vector3f target = { 0.0f, 0.0f, -0.01f };//相机观察目标方向
-	Eigen::Vector3f up = { 0.0f, 1.0f, 0.0f };//上向量
+	Eigen::Vector3f position;//相机位置
+	Eigen::Vector3f target;//相机观察目标方向
+	Eigen::Vector3f up;//上向量
 
 	//** 控制model矩阵 **
 	// 旋转
@@ -132,15 +157,18 @@ public:
 	bool is_translate = false;
 
 	//记录下平移前鼠标位置
-	Vector2f M_start_translate = {0.0f,0.0f};
+	Vector2f M_start_translate = { 0.0f,0.0f };
 	float sensitivity = 0.001;
 
 	//是否正在旋转
 	bool is_rotate = false;
 
 	BoundingBox3f scene_bbox;
-	
+
 	Eigen::Matrix4f preTransform = Eigen::Matrix4f::Identity();
+
+	// 设置相机方向，参考cloud compare
+	void setView(ViewOrientation orientation);
 
 	//------------观察矩阵 (View)-------------
 	//----------------------------------------
@@ -154,7 +182,7 @@ public:
 	//* up 上向量 ，用于创建 相机坐标系
 	//
 	//利用该观察矩阵，可以将物体世界坐标转换为相机坐标系下坐标
-	Eigen::Matrix4f lookAt(const Eigen::Vector3f &origin, const Eigen::Vector3f &target, const Eigen::Vector3f up);
+	Eigen::Matrix4f lookAt(const Eigen::Vector3f& origin, const Eigen::Vector3f& target, const Eigen::Vector3f up);
 
 	//-----------正射投影-------------
 	//
@@ -185,16 +213,16 @@ public:
 	Eigen::Vector3f convert_2dTo3d(const Eigen::Vector2f& screen_point);
 	Eigen::Vector2f convert_3dTo2d(const Eigen::Vector3f& world_point);
 	///\brief 开始平移
-	void start_translate(const Vector2f &screen_point);
+	void start_translate(const Vector2f& screen_point);
 	///\brief 正在平移动作
-	void motion_translate(const Vector2f &screen_point);
+	void motion_translate(const Vector2f& screen_point);
 	///\brief 结束平移
-	void end_translate(const Vector2i &screen_point);
+	void end_translate(const Vector2i& screen_point);
 
 	///\brief 开始旋转
-	void start_rotate(const Vector2i &screen_point);
+	void start_rotate(const Vector2i& screen_point);
 	///\brief 正在旋转时移动
-	void motion_rotate(const Vector2i &screen_point);
+	void motion_rotate(const Vector2i& screen_point);
 	///\brief 结束旋转
-	void end_rotate(const Vector2i &screen_point);
+	void end_rotate(const Vector2i& screen_point);
 };

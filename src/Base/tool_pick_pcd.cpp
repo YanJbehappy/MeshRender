@@ -125,23 +125,31 @@ void ToolPick::mouseRelease(QMouseEvent *e) {
 	this->glWidget->toolCamera->mouseRelease(e);
 	
 	if (clickX == e->localPos().x() && clickY == e->localPos().y()) {
-		FrameBuffer *fbo = this->glWidget->fbo;
-		auto x = e->localPos().x();
-		auto y = fbo->height - e->localPos().y();
+		QPointF mousePos = e->localPos();
+		vector<QPointF> nearPos = spiralTraversal(mousePos, 4);
 
-		GLubyte *indexData = new GLubyte[fbo->width * fbo->height * 4];
+		FrameBuffer* fbo = this->glWidget->fbo;
+		GLubyte* indexData = new GLubyte[fbo->width * fbo->height * 4];
 		glGetTextureImage(fbo->textures[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, fbo->height * fbo->width * 4, indexData);
-		int i = 4 * fbo->width * y + 4 * x; // image index
-		uint index = indexData[i] | (indexData[i + 1] << 8) | (indexData[i + 2] << 16) | (indexData[i + 3] << 24); // 打乱后的 index
-
 		auto positions = glWidget->getProgressiveRenderMap().at(cloudName_)->getCurrentPcd()->position; // Get Pick Point
 		auto indexTable = glWidget->getProgressiveRenderMap().at(cloudName_)->getCurrentPcd()->indexTable;
-		if (index < positions.cols() && index > 0) {
-			this->point = positions.col(indexTable[index]);
-			//std::cout << index << std::endl;
-			//std::cout << this->point << std::endl;
-			auto offset = this->glWidget->getProgressiveRenderMap().at(cloudName_)->getCurrentPcd()->offset;
-			emit pickPointCallback(point + offset);
+		for (int nearIndex = 0; nearIndex < nearPos.size(); nearIndex++)
+		{
+			QPointF nearPoint = nearPos[nearIndex];
+			auto x = nearPoint.x();
+			auto y = fbo->height - nearPoint.y();
+
+			int i = 4 * fbo->width * y + 4 * x; // image index
+			uint index = indexData[i] | (indexData[i + 1] << 8) | (indexData[i + 2] << 16) | (indexData[i + 3] << 24); // 打乱后的 index
+
+			if (index < positions.cols() && index > 0) {
+				this->point = positions.col(indexTable[index]);
+				//std::cout << index << std::endl;
+				//std::cout << this->point << std::endl;
+				auto offset = this->glWidget->getProgressiveRenderMap().at(cloudName_)->getCurrentPcd()->offset;
+				emit pickPointCallback(point + offset);
+				break;
+			}
 		}
 
 		delete indexData;
@@ -164,5 +172,40 @@ void ToolPick::keyPress(QKeyEvent *e) {
 	if (e->key() == Qt::Key_Escape) {
 		this->glWidget->toolManager->changeTool(CameraTool);
 	}
+}
+
+// 从中心点螺旋遍历，获取周围方形区域坐标，rings表示螺旋层数
+std::vector<QPointF> ToolPick::spiralTraversal(QPointF& centerPos, int rings)
+{
+	vector<QPointF> spiralIndexSquare;
+	// 先将中心点加入列表
+	spiralIndexSquare.emplace_back(centerPos);
+	double x0 = centerPos.x();
+	double y0 = centerPos.y();
+	for (int i = 1; i < rings; i++)
+	{
+		// 遍历上部
+		for (int upX = static_cast<int>(x0) - i; upX < (static_cast<int>(x0) + i); upX++) {
+			QPointF up(static_cast<double>(upX), y0 - static_cast<double>(i));
+			spiralIndexSquare.emplace_back(up);
+		}
+		// 遍历右部
+		for (int rightY = static_cast<int>(y0) - i; rightY < (static_cast<int>(y0) + i); rightY++) {
+			QPointF right(x0 + static_cast<double>(i), static_cast<double>(rightY));
+			spiralIndexSquare.emplace_back(right);
+		}
+		// 遍历下部
+		for (int bottomX = static_cast<int>(x0) - i + 1; bottomX < (static_cast<int>(x0) + i + 1); bottomX++) {
+			QPointF bottom(static_cast<double>(bottomX), y0 + static_cast<double>(i));
+			spiralIndexSquare.emplace_back(bottom);
+		}
+		// 遍历左部
+		for (int leftY = static_cast<int>(y0) - i + 1; leftY < (static_cast<int>(y0) + i + 1); leftY++) {
+			QPointF left(x0 - static_cast<double>(i), static_cast<double>(leftY));
+			spiralIndexSquare.emplace_back(left);
+		}
+	}
+
+	return spiralIndexSquare;
 }
 

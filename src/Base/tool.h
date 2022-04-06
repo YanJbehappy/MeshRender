@@ -1,6 +1,6 @@
 /*
  * @Descripttion: 基本工具管理类
- * @version: 
+ * @version:
  * @Author: JinYiGao
  * @Date: 2021-07-17 15:24:44
  * @LastEditors: JinYiGao
@@ -18,6 +18,7 @@
 
 #include <Eigen/Eigen>
 
+ // 渲染类工具
 enum ToolType {
 	CameraTool = 0,    // 相机工具
 	DrawPolygonTool,   // 多边形绘制工具
@@ -31,56 +32,70 @@ enum ToolType {
 	NoneTool = 0xFFFFFFFF // 不选择任何工具
 };
 
+// Qt画图形状
+enum DrawShapes {
+	DRAW_Circle = 0,	// 绘制圆形
+	DRAW_Rectangle,		// 绘制矩形
+	DRAW_Polygon		// 绘制多边形
+};
+
 struct Point {
 	float x;
 	float y;
 	Point() {
-
+		this->x = 0.0;
+		this->y = 0.0;
 	}
 	Point(float x, float y) {
 		this->x = x;
 		this->y = y;
+	}
+
+	Point& operator+=(const Point& p) {
+		this->x += p.x;
+		this->y += p.y;
+		return *this;
 	}
 };
 
 class Tool;
 
 // 工具管理类
-class ToolManager : public QObject{
+class ToolManager : public QObject {
 	Q_OBJECT
 public:
-	ToolManager(QObject *parent);
+	ToolManager(QObject* parent);
 	~ToolManager();
 
 public:
-	Tool *get_tool(int id) const; // 获取对应id的工具
-	Tool *get_current() const; // 获取当前工具
+	Tool* get_tool(int id) const; // 获取对应id的工具
+	Tool* get_current() const; // 获取当前工具
 	int getToolType() const; // 获取工具类型
 	void suspend_current(); // 暂停当前工具使用
 	void resume_current(); // 恢复当前工具使用
 	void reset_current(); // 重置当前使用工具
 	bool isSuspended() const; // 当前工具是否暂停使用
 
-	void register_tool(int id, Tool *tool); // 注册工具
+	void register_tool(int id, Tool* tool); // 注册工具
 	void removeAll(); // 删除所有工具
 	void changeTool(int id); // 更换当前工具
 
 public:
-	void draw(QPainter *painter); // 绘制
+	void draw(QPainter* painter); // 绘制
 	void gl_draw(); // 以OpenGL方式绘制
 
-	void mousePress(QMouseEvent *e); // 鼠标按下
-	void mouseRelease(QMouseEvent *e); // 鼠标抬起
-	void mouseMove(QMouseEvent *e); // 鼠标移动
-	void mouseDoubleClick(QMouseEvent *e); // 鼠标双击
-	void wheelEvent(QWheelEvent *e);
-	void keyDown(QKeyEvent *e); // 键盘按下
-	void keyUp(QKeyEvent *e); // 键盘抬起
-	void keyPress(QKeyEvent *e); // 键盘完整按下事件
+	void mousePress(QMouseEvent* e); // 鼠标按下
+	void mouseRelease(QMouseEvent* e); // 鼠标抬起
+	void mouseMove(QMouseEvent* e); // 鼠标移动
+	void mouseDoubleClick(QMouseEvent* e); // 鼠标双击
+	void wheelEvent(QWheelEvent* e);
+	void keyDown(QKeyEvent* e); // 键盘按下
+	void keyUp(QKeyEvent* e); // 键盘抬起
+	void keyPress(QKeyEvent* e); // 键盘完整按下事件
 
 protected:
 	std::map<int, Tool*> tools; // tools
-	Tool *currentTool; // 当前tool
+	Tool* currentTool; // 当前tool
 
 	bool Suspended; // 当前工具是否处于暂停状态
 };
@@ -103,16 +118,16 @@ public:
 	virtual void reset() {};
 
 	// QPainter绘制
-	virtual void draw(QPainter *painter) {};
+	virtual void draw(QPainter* painter) {};
 	// OpenGL方式绘制
 	virtual void gl_draw() {};
 
-	virtual void mousePress(QMouseEvent *e) {}; // 鼠标按下
-	virtual void mouseRelease(QMouseEvent *e) {}; // 鼠标抬起
-	virtual void mouseMove(QMouseEvent *e) {}; // 鼠标移动
-	virtual void mouseDoubleClick(QMouseEvent *e) {}; // 鼠标双击
-	virtual void wheelEvent(QWheelEvent *e) {};
-	virtual void keyDown(QKeyEvent *e) {}; // 键盘按下
-	virtual void keyUp(QKeyEvent *e) {}; // 键盘抬起
-	virtual void keyPress(QKeyEvent *e) {}; // 键盘完整按下事件
+	virtual void mousePress(QMouseEvent* e) {}; // 鼠标按下
+	virtual void mouseRelease(QMouseEvent* e) {}; // 鼠标抬起
+	virtual void mouseMove(QMouseEvent* e) {}; // 鼠标移动
+	virtual void mouseDoubleClick(QMouseEvent* e) {}; // 鼠标双击
+	virtual void wheelEvent(QWheelEvent* e) {};
+	virtual void keyDown(QKeyEvent* e) {}; // 键盘按下
+	virtual void keyUp(QKeyEvent* e) {}; // 键盘抬起
+	virtual void keyPress(QKeyEvent* e) {}; // 键盘完整按下事件
 };

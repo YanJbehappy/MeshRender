@@ -22,8 +22,9 @@ vector<int> ToolDrawProfile::getPointsByPolyline(ProgressiveRender *proRender, v
 	return proRender->selectPointsByPolyline(polyline, gridPolyline);
 }
 
-QChart* ToolDrawProfile::drawProfile(ProgressiveRender *proRender, vector<Point> polyline,float &Alllength) {
+QChart* ToolDrawProfile::drawProfile(ProgressiveRender *proRender, vector<Point> polyline,float &Alllength, vector<std::pair<float, int>>& lengthIndex) {
 	vector<Point> gridPolyline;
+	//auto pointsIndex = this->getPointsByPolyline(proRender, polyline, gridPolyline);
 	auto pointsIndex = this->getPointsByPolyline(proRender, polyline, gridPolyline);
 
 	QLineSeries *series = new QLineSeries();
@@ -63,6 +64,7 @@ QChart* ToolDrawProfile::drawProfile(ProgressiveRender *proRender, vector<Point>
 			if (startPoint.isIdentity()) {
 				startPoint = point;
 				series->append(Alllength, point.z()); // 起点只可能在初始为Identity 后面全都由endPoint赋值
+				lengthIndex.emplace_back(std::make_pair(Alllength, static_cast<int>(targetIndex)));	// 记录折线图X轴坐标节点对应三维点索引
 			}
 			else if (endPoint.isIdentity()) {
 				endPoint = point;
@@ -72,7 +74,7 @@ QChart* ToolDrawProfile::drawProfile(ProgressiveRender *proRender, vector<Point>
 				double zVal = endPoint.z();
 				//Alllength += sqrt(pow(endPoint.x() - startPoint.x(), 2) + pow(endPoint.y() - startPoint.y(), 2));
 				series->append(Alllength, zVal);
-
+				lengthIndex.emplace_back(std::make_pair(Alllength, static_cast<int>(targetIndex)));
 				startPoint = endPoint;
 				endPoint = Eigen::Vector3f::Identity();
 			}
@@ -83,9 +85,12 @@ QChart* ToolDrawProfile::drawProfile(ProgressiveRender *proRender, vector<Point>
 	chart->legend()->hide();
 	chart->addSeries(series);
 	chart->createDefaultAxes();
+	chart->setTitleBrush(QBrush(QColor(241, 241, 241, 255)));
+	chart->axisX()->setLabelsColor(QColor(241, 241, 241, 255));
+	chart->axisY()->setLabelsColor(QColor(241, 241, 241, 255));
 	//chart->axisY()->setRange(minZval, maxZval);
 
-	chart->setBackgroundBrush(QBrush(QColor(102, 102, 102, 42)));
+	chart->setBackgroundBrush(QBrush(QColor(60, 60, 60, 255)));
 
 	return chart;
 }

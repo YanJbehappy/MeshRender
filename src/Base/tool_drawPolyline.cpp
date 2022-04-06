@@ -58,7 +58,7 @@ void ToolDrawPolyline::mousePress(QMouseEvent *e) {
 		Point point(e->localPos().x(), e->localPos().y());
 		polyline.emplace_back(point);
 	}
-	if (e->buttons() == Qt::MiddleButton) {
+	if (e->buttons() == Qt::RightButton) {
 		this->is_translate = true;
 		this->startPos = { e->localPos().x(), e->localPos().y() };
 	}

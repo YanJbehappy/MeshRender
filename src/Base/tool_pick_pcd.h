@@ -47,6 +47,8 @@ public:
 	void wheelEvent(QWheelEvent *e);
 	void keyPress(QKeyEvent *e);
 
+	std::vector<QPointF> spiralTraversal(QPointF& centerPos, int rings);
+
 Q_SIGNALS:
 	void pickPointCallback(Eigen::Vector3f point);
 

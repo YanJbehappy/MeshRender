@@ -1,6 +1,6 @@
 /*
  * @Descripttion: 多边形绘制工具类
- * @version: 
+ * @version:
  * @Author: JinYiGao
  * @Date: 2021-07-18 20:46:22
  * @LastEditors: JinYiGao
@@ -30,6 +30,7 @@ Q_SIGNALS:
 protected:
 	bool drawing = false; // 是否处于绘制状态
 
+	int drawType = DrawShapes::DRAW_Polygon;
 	int type = DrawPolygonTool;
 
 public:
@@ -39,17 +40,19 @@ public:
 	void suspend() override; // 暂停工具
 	void resume() override; // 恢复工具
 
+	void setDrawType(DrawShapes type);
 	int getToolType() override;
 
 	void reset() override; // 重置
 
-	void draw(QPainter *painter) override;
+	void draw(QPainter* painter) override;
 	void gl_draw() override;
 
 	// 键鼠操作
-	void mousePress(QMouseEvent *e) override;
-	void mouseMove(QMouseEvent *e) override;
-	void mouseDoubleClick(QMouseEvent *e) override;
+	void mousePress(QMouseEvent* e) override;
+	void mouseRelease(QMouseEvent* e) override;
+	void mouseMove(QMouseEvent* e) override;
+	void mouseDoubleClick(QMouseEvent* e) override;
 	// 键盘操作
-	void keyPress(QKeyEvent *e) override;
+	void keyPress(QKeyEvent* e) override;
 };
