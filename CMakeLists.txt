@@ -36,11 +36,6 @@ find_package(Qt5 COMPONENTS Core Gui Widgets Charts LinguistTools REQUIRED)
 # include(Qt5LinguistToolsMacrosNoInclude)
 
 find_package(PCL REQUIRED)
-find_package(Boost REQUIRED) # It's "Boost", not "BOOST" or "boost". Case matters.
-
-# VTK相关target
-find_package(VTK REQUIRED)
-include(${VTK_USE_FILE})
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
@@ -49,25 +44,19 @@ add_definitions(${PCL_DEFINITIONS})
 #添加矩阵运算库eigen
 find_package(eigen3 REQUIRED)
 
-# Laszip3::Laszip3
-find_package(Laszip3 REQUIRED)
+# # Laszip3::Laszip3
+# find_package(Laszip3 REQUIRED)
 
-# GDAL库
-find_package(GDAL REQUIRED)
+# # GDAL库
+# find_package(GDAL REQUIRED)
+
+# # Boost库
+# find_package(Boost REQUIRED) # It's "Boost", not "BOOST" or "boost". Case matters.
 
 #添加头文件搜索目录 Eigen3头文件目录 当前cmakelists文件所在目录/src
 include_directories(${EIGEN3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src)
-# 添加根目录下的第三方库
-# include_directories("${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/libLAS")
-# set(libLAS_headers "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/libLAS/include")
-# set(libLAS_dll_dir "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/libLAS/dll")
-# set(libLAS_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/libLAS/lib")
 
-set(kd_tree_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/kd_tree")
-set(cminpack_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/cminpack")
-set(lm_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/optimizer_lm")
-set(easy3d_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/easy3d")
-set(tetgen_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/tetgen")
+# 添加根目录下的第三方库
 
 add_subdirectory(src)
 # add_subdirectory(3rd_party)

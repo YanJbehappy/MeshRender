@@ -15,8 +15,6 @@
 #include <qfiledialog.h>
 #include <QMessageBox>
 
-#include "IO/lasio.h"
-
 ToolAddPcd::ToolAddPcd(RenderWidget *glWidget) {
 	this->glWidget = glWidget;
 }
@@ -55,7 +53,7 @@ void ToolAddPcd::activate() {
 	else {
 		// ╤ах║нд╪Ч
 		std::shared_ptr<PointCloud> pcd(new PointCloud());
-		read_las(path.toStdString(), pcd);
+		//read_las(path.toStdString(), pcd);
 
 		//// AddPcdCommand
 		//MainWindow::mainWindow->getUndoStack()->push(new AddPcdCommand(this->proRender, pcd));
