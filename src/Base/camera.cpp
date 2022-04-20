@@ -11,6 +11,20 @@
 #include <iostream>
 #include <QTime>
 
+
+ //获得缩放矩阵
+Eigen::Matrix4f scale(const Eigen::Vector3f& v)
+{
+	return Eigen::Affine3f(Eigen::Scaling(v)).matrix();
+}
+
+//获得平移矩阵
+Eigen::Matrix4f translate(const Eigen::Vector3f& v)
+{
+	return Eigen::Affine3f(Eigen::Translation<float, 3>(v)).matrix();
+}
+
+
 Camera::Camera()
 {
 	this->setView(TOP_VIEW);
@@ -53,6 +67,30 @@ void Camera::setView(ViewOrientation orientation)
 	newArcball.setSize(size);
 	newArcball.setView(orientation);
 	this->arcball = newArcball;
+}
+
+void Camera::setRotateCenter(const Eigen::Vector3f& center)
+{
+	// 先将选中的点平移到原点
+	this->setPreTransform(translate(-center));
+
+	if (this->rotateCenter == Eigen::Vector3f::Zero())
+	{
+		this->rotateCenter = center;
+		return;
+	}
+	//model_translation = Eigen::Vector3f::Identity();
+	Eigen::Vector3f centerTrans = center - rotateCenter;
+	this->rotateCenter = center;
+
+	Eigen::Vector3f front = (target - position).normalized();
+	Eigen::Vector3f right = front.cross(up).normalized();
+	Eigen::Vector3f top = right.cross(front);
+	Eigen::Vector3f resetMove(centerTrans.dot(right), centerTrans.dot(top), centerTrans.dot(front));
+	std::cout << resetMove.transpose() << std::endl;
+	model_translation += resetMove.head(3);
+	//model_translation[0] += centerTrans.dot(right);
+	//model_translation[1] += centerTrans.dot(top);
 }
 
 //------------观察矩阵 (View)-------------
@@ -116,18 +154,6 @@ Eigen::Matrix4f Camera::frustum(float left, float right, float bottom, float top
 
 void Camera::setPreTransform(Eigen::Matrix4f preTransform) {
 	this->preTransform = preTransform;
-}
-
-//获得缩放矩阵
-Eigen::Matrix4f scale(const Eigen::Vector3f& v)
-{
-	return Eigen::Affine3f(Eigen::Scaling(v)).matrix();
-}
-
-//获得平移矩阵
-Eigen::Matrix4f translate(const Eigen::Vector3f& v)
-{
-	return Eigen::Affine3f(Eigen::Translation<float, 3>(v)).matrix();
 }
 
 //创建模型矩阵  ---包含模型 旋转 平移 缩放

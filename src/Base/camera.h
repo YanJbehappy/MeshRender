@@ -134,6 +134,7 @@ public:
 	Eigen::Vector3f position;//相机位置
 	Eigen::Vector3f target;//相机观察目标方向
 	Eigen::Vector3f up;//上向量
+	Eigen::Vector3f rotateCenter = Eigen::Vector3f::Zero();// 相机旋转中心
 
 	//** 控制model矩阵 **
 	// 旋转
@@ -170,6 +171,8 @@ public:
 	// 设置相机方向，参考cloud compare
 	void setView(ViewOrientation orientation);
 
+	// 设置相机旋转中心
+	void setRotateCenter(const Eigen::Vector3f& center);
 	//------------观察矩阵 (View)-------------
 	//----------------------------------------
 	//         Rx  Ry  Rz  0     1  0  0  -Px

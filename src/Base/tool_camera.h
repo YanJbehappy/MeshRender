@@ -1,6 +1,6 @@
 /*
  * @Descripttion: 相机工具类
- * @version: 
+ * @version:
  * @Author: JinYiGao
  * @Date: 2021-07-18 20:45:22
  * @LastEditors: JinYiGao
@@ -29,7 +29,7 @@ class ToolCamera :public Tool {
 
 public:
 	ToolCamera();
-	ToolCamera(RenderWidget *glWidget);
+	ToolCamera(RenderWidget* glWidget);
 	~ToolCamera();
 
 	void setCameraType(int cameratype); // 设置相机类型
@@ -41,15 +41,17 @@ public:
 
 	int getToolType() override;
 
-	void mousePress(QMouseEvent *e) override;
-	void mouseRelease(QMouseEvent *e) override;
+	void mousePress(QMouseEvent* e) override;
+	void mouseRelease(QMouseEvent* e) override;
 	void mouseDoubleClick(QMouseEvent* e) override;
-	void mouseMove(QMouseEvent *e) override;
-	void wheelEvent(QWheelEvent *e) override;
+	void mouseMove(QMouseEvent* e) override;
+	void wheelEvent(QWheelEvent* e) override;
 
+	Eigen::Vector3f convert_2dTo3d(const Eigen::Vector2f& screen_point, int& onModel);
+	Eigen::Vector2f convert_3dTo2d(const Eigen::Vector3f& world_point);
 protected:
-	RenderWidget *glWidget = nullptr;
-	Camera *camera = nullptr;
+	RenderWidget* glWidget = nullptr;
+	Camera* camera = nullptr;
 
 	int toolType = CameraTool;
 	int cameraType = Camera3D;
